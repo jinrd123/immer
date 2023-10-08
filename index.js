@@ -7,6 +7,7 @@ function produce(target, callback) {
             const handler = {
                 get(target, key) {
                     const lastestObj = getLastest(target);
+                    if(Array.isArray(lastestObj) && key === 'length') return lastestObj[key]; // fix: 针对数组的length访问进行单独处理
                     return createProxy(lastestObj[key]); // 访问即对象代理化
                 },
                 set(target, key, value) {
@@ -81,3 +82,12 @@ draft.a.name = 'xhr';
   
 console.log(result);
 console.log(result === obj);
+
+// 关于数组的测试用例
+const arr = [1, 2, 3,];
+const result2 = produce(arr, (draft) => {
+  draft.push(4);
+})
+console.log(result2);
+console.log(arr);
+console.log(result2 === arr);
