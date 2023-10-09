@@ -7,8 +7,10 @@ function produce(target, callback) {
             const handler = {
                 get(target, key) {
                     const lastestObj = getLastest(target);
-                    if(Array.isArray(lastestObj) && key === 'length') return lastestObj[key]; // fix: 针对数组的length访问进行单独处理
-                    return createProxy(lastestObj[key]); // 访问即对象代理化
+                    // 支持produce回调函数体中对非对象属性的get访问
+                    const value = lastestObj[key];
+                    if(typeof value !== 'object') return value;
+                    else return createProxy(value); // 访问即对象代理化
                 },
                 set(target, key, value) {
                     const copy = shallowCopy(target);
