@@ -1,4 +1,4 @@
-function produce(target, callback) {
+function produce(target, callback, ...args) {
     const proxies = new Map();
     const copies = new Map();
 
@@ -71,9 +71,18 @@ function produce(target, callback) {
         return false;
     }
 
-    const proxy = createProxy(target); // 代理化初始对象
-    callback(proxy); // 触发数据更新并利用proxy对象记录信息
-    return finalize(target); // 合并更新信息，返回新对象
+    if(typeof target === 'function') { // 支持produce柯里化（先传callback，后续调用再传入data）
+        console.log('@@@@')
+        return (data, ...args) => {
+            return produce(data, target, ...args);
+        }
+    } else {
+        const proxy = createProxy(target); // 代理化初始对象
+        callback(proxy, ...args); // 触发数据更新并利用proxy对象记录信息
+        return finalize(target); // 合并更新信息，返回新对象
+    }
+
+    
 }
 
 const obj = {a: {name: 'jrd'}};
@@ -93,3 +102,32 @@ const result2 = produce(arr, (draft) => {
 console.log(result2);
 console.log(arr);
 console.log(result2 === arr);
+
+
+// 柯里化测试
+const curriedProduce = produce((draft, action) => {
+    switch(action.type) {
+        case 'add':
+            draft.counter.count += action.add;
+            break;
+        case 'dec':
+            draft.conuter.count -= action.dec;
+            break;
+        default:
+            break;
+    }
+});
+console.log(curriedProduce);
+const newData = curriedProduce(
+    {
+        counter: {
+            count: 0
+        }
+    },
+    {
+        type: 'add',
+        add: 5
+    }
+)
+
+console.log(newData);
